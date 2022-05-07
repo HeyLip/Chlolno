@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "581901207786",
+    "project_id": "chlolno",
+    "storage_bucket": "chlolno.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:581901207786:android:3ddc7dd5753e74f9322f93",
+        "android_client_info": {
+          "package_name": "com.example.chlolno"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "581901207786-frs0h6uskpsvuaun0e0s46n13uug1ifo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.chlolno",
+            "certificate_hash": "f82bc516f6ef3078fe600b7cd3c5f11cd4d320e9"
+          }
+        },
+        {
+          "client_id": "581901207786-p7f4cenkqnsfqcl2d2r49ee30irbbgfq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5Imn12pT_D4k3g2QhaTX9pxWkAoOOL7c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "581901207786-p7f4cenkqnsfqcl2d2r49ee30irbbgfq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
