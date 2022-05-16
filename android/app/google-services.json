@@ -54,6 +54,14 @@
           }
         },
         {
+          "client_id": "581901207786-nnrianl1rq2vor01as7mlrbgmso639s7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.chlolno",
+            "certificate_hash": "1f30464269ebf6d59d16b427de6d684be85c2fbb"
+          }
+        },
+        {
           "client_id": "581901207786-p7f4cenkqnsfqcl2d2r49ee30irbbgfq.apps.googleusercontent.com",
           "client_type": 3
         }

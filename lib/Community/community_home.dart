@@ -4,6 +4,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'addPost.dart';
+
 
 class CommunityHomePage extends StatefulWidget {
 
@@ -93,6 +95,17 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
       appBar: AppBar(
         title: const Text('Community'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.post_add),
+            onPressed: () {
+              Navigator.push(context,
+                  MaterialPageRoute<void>(builder: (BuildContext context) {
+                    return const AddPost();
+                  }));
+            },
+          ),
+        ],
       ),
       body: Column(
         children: <Widget>[
