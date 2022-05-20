@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class AddPost extends StatefulWidget {
@@ -10,6 +12,16 @@ class AddPost extends StatefulWidget {
 class _AddPostState extends State<AddPost> {
   final _titleController = TextEditingController();
   final _detailController = TextEditingController();
+
+  FirebaseAuth auth = FirebaseAuth.instance;
+  late CollectionReference database;
+
+  @override
+  void initState() {
+    super.initState();
+    database = FirebaseFirestore.instance
+        .collection('Community');
+  }
 
 
   @override
@@ -66,6 +78,12 @@ class _AddPostState extends State<AddPost> {
         child: TextButton(
             onPressed: () async {
 
+              database.add({
+                'title': _titleController.text,
+                'detail': _detailController.text,
+                'user_id': auth.currentUser?.uid,
+                'like': 0
+              });
 
               setState(() {
                 Navigator.pop(context);

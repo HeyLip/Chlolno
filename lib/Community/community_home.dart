@@ -1,3 +1,4 @@
+import 'package:chlolno/Community/post_Detail.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -6,9 +7,7 @@ import 'package:intl/intl.dart';
 
 import 'addPost.dart';
 
-
 class CommunityHomePage extends StatefulWidget {
-
   const CommunityHomePage({Key? key}) : super(key: key);
 
   @override
@@ -18,34 +17,51 @@ class CommunityHomePage extends StatefulWidget {
 class _CommunityHomePageState extends State<CommunityHomePage> {
   late CollectionReference database;
 
+  @override
+  void initState() {
+    super.initState();
+    database = FirebaseFirestore.instance.collection('Community');
+  }
+
   List<InkWell> _buildListCards(
       BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
     final ThemeData theme = Theme.of(context);
 
     return snapshot.data!.docs.map((DocumentSnapshot document) {
-      DateTime _dateTime =
-      DateTime.parse(document['expirationDate'].toDate().toString());
+      // DateTime _dateTime = DateTime.parse(document['expirationDate'].toDate().toString());
       return InkWell(
         onTap: () {
-          // dialog(document['photoUrl'], document['productName'], _dateTime,
-          //     document['description']);
+          Navigator.push(context,
+              MaterialPageRoute<void>(builder: (BuildContext context) {
+                return PostDetail(
+                  docId: document.id,
+                  title: document['title'],
+                  detail: document['detail'],
+                );
+              }));
         },
         child: Container(
-            margin: const EdgeInsets.only(bottom: 25),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(15.0),
             decoration: const BoxDecoration(
               color: Color(0xFFB2DEB8),
               borderRadius: BorderRadius.all(Radius.circular(15)),
             ),
             child: Row(
               children: [
-                SizedBox(
-                  width: 80,
-                  height: 80,
-                  child: ClipOval(
-                    child:
-                    Image.network(document['photoUrl'], fit: BoxFit.fill),
-                  ),
+                Column(
+                  children: [
+                    const Icon(
+                      Icons.local_fire_department,
+                      size: 28,
+                      color: Colors.red,
+                    ),
+                    Text(
+                      document['like'].toString(),
+                      style: theme.textTheme.headline6,
+                      maxLines: 1,
+                    ),
+                  ],
                 ),
                 const SizedBox(
                   width: 30,
@@ -59,30 +75,14 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
                         height: 10,
                       ),
                       Text(
-                        document['productName'],
+                        document['title'],
                         style: theme.textTheme.headline6,
                         maxLines: 1,
                       ),
                       const SizedBox(height: 8.0),
-                      Text(
-                        '${DateFormat('yyyy').format(_dateTime)}.${_dateTime.month}.${_dateTime.day}',
-                        style: theme.textTheme.subtitle2,
-                      ),
                     ],
                   ),
                 ),
-                IconButton(
-                    icon: const Icon(
-                      Icons.delete,
-                    ),
-                    iconSize: 30,
-                    color: Colors.white,
-                    onPressed: () async {
-                      database.doc(document.id).delete();
-                      FirebaseStorage.instance
-                          .refFromURL(document['photoUrl'])
-                          .delete();
-                    }),
               ],
             )),
       );
@@ -101,18 +101,41 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
             onPressed: () {
               Navigator.push(context,
                   MaterialPageRoute<void>(builder: (BuildContext context) {
-                    return const AddPost();
-                  }));
+                return const AddPost();
+              }));
             },
           ),
         ],
       ),
       body: Column(
         children: <Widget>[
-
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: database.snapshots(),
+              builder: (BuildContext context,
+                  AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Error: ${snapshot.error}'),
+                  );
+                }
+                switch (snapshot.connectionState) {
+                  case ConnectionState.waiting:
+                    return const Center(
+                      child: Text('Loading...'),
+                    );
+                  default:
+                    return ListView(
+                        padding: const EdgeInsets.all(16.0),
+                        children:
+                            _buildListCards(context, snapshot) // Changed code
+                        );
+                }
+              },
+            ),
+          ),
         ],
       ),
-
     );
   }
 }
