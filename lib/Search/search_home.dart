@@ -1,9 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-
 
 class SearchHomePage extends StatefulWidget {
 
@@ -14,78 +9,9 @@ class SearchHomePage extends StatefulWidget {
 }
 
 class _SearchHomePageState extends State<SearchHomePage> {
-  late CollectionReference database;
-
-  List<InkWell> _buildListCards(
-      BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-    final ThemeData theme = Theme.of(context);
-
-    return snapshot.data!.docs.map((DocumentSnapshot document) {
-      DateTime _dateTime =
-      DateTime.parse(document['expirationDate'].toDate().toString());
-      return InkWell(
-        onTap: () {
-          // dialog(document['photoUrl'], document['productName'], _dateTime,
-          //     document['description']);
-        },
-        child: Container(
-            margin: const EdgeInsets.only(bottom: 25),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: const BoxDecoration(
-              color: Color(0xFFB2DEB8),
-              borderRadius: BorderRadius.all(Radius.circular(15)),
-            ),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 80,
-                  height: 80,
-                  child: ClipOval(
-                    child:
-                    Image.network(document['photoUrl'], fit: BoxFit.fill),
-                  ),
-                ),
-                const SizedBox(
-                  width: 30,
-                ),
-                SizedBox(
-                  width: 174,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Text(
-                        document['productName'],
-                        style: theme.textTheme.headline6,
-                        maxLines: 1,
-                      ),
-                      const SizedBox(height: 8.0),
-                      Text(
-                        '${DateFormat('yyyy').format(_dateTime)}.${_dateTime.month}.${_dateTime.day}',
-                        style: theme.textTheme.subtitle2,
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                    icon: const Icon(
-                      Icons.delete,
-                    ),
-                    iconSize: 30,
-                    color: Colors.white,
-                    onPressed: () async {
-                      database.doc(document.id).delete();
-                      FirebaseStorage.instance
-                          .refFromURL(document['photoUrl'])
-                          .delete();
-                    }),
-              ],
-            )),
-      );
-    }).toList();
-  }
+  final TextEditingController _inputController =  TextEditingController();
+  String inputText = "";
+  List<String>? summonerNameList;
 
   @override
   Widget build(BuildContext context) {
@@ -95,11 +21,56 @@ class _SearchHomePageState extends State<SearchHomePage> {
         centerTitle: true,
       ),
       body: Column(
-        children: <Widget>[
+          children: <Widget>[
+            SingleChildScrollView(
+                child: Column(
+                  children: <Widget>[
+                    SizedBox(height: 50,),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 10.0),
+                      child: TextField(
+                        controller: _inputController,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Input Summoner Name',
+                          hintText: 'Enter Summoner names',
+                        ),
 
-        ],
+                      ),
+                    ),
+                  ],
+                ),
+            ),
+            ElevatedButton(
+                onPressed: (){
+                  inputText = _inputController.text;
+                  summonerNameList = textCutter(inputText);
+                  setState((){});
+
+                  /*if(summonerNameList!.length == 1){
+                    Navigator.pushNamed(context, 'Result');
+                  }
+                  else{
+                    Navigator.pushNamed(context, 'MultiResult');
+                  }
+                   */
+                },
+                child: const Text('Search')
+            ),
+            const SizedBox(height: 50,),
+          ],
       ),
-
     );
   }
 }
+
+List<String> textCutter(String text){
+  List<String> tl;
+  text.trim();
+  tl = text.split(',');
+  for(int i=0; i<tl.length; i++){
+    tl[i] = tl[i].trim();
+  }
+  return tl;
+}
+

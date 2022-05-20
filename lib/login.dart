@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'main_home.dart';
+import 'package:flutter_signin_button/flutter_signin_button.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -83,15 +84,11 @@ class _LoginPageState extends State {
             obscureText: true,
           ),
           // --------------------- Email login button ------------------------------
-          ElevatedButton(
-
-            style: ButtonStyle( // <- button의 색, 모양들을 결정하는 부분입니다.
-              backgroundColor: MaterialStateProperty.all(const Color(0xFF5B836A)),
-              foregroundColor: MaterialStateProperty.all(Colors.white),
-            ),
-
-
-            child: const Text('LOGIN'), // <- button의 문구를 결정하는 부분
+          const SizedBox(height: 10,),
+          SignInButtonBuilder(
+            text: 'Sign in with Email', //button의 문구를 결정하는 부분
+            icon: Icons.email_outlined,
+            backgroundColor: Colors.blue.shade600,
             onPressed: () async { // <- button을 눌렀을 때, 어떤 기능을 수행하는지 구현하는 부분
 
               final UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(email: _emailController.text, password: _passwordController.text);
@@ -112,25 +109,8 @@ class _LoginPageState extends State {
 
 
           // ---------------------- google login button ----------------------------
-          ElevatedButton(
-
-            style: ButtonStyle( // <- button의 색, 모양들을 결정하는 부분입니다.
-              backgroundColor: MaterialStateProperty.all(const Color(0xFF5B836A)),
-              foregroundColor: MaterialStateProperty.all(Colors.white),
-            ),
-
-
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Image(
-                  image: AssetImage("assets/google_logo.png"),
-                  height: 10,
-                ),
-                SizedBox(width: 10,),
-                Text('GOOGLE'), // <- button의 문구를 결정하는 부분
-              ],
-            ),
+          SignInButton(
+            Buttons.GoogleDark,
             onPressed: () async { // <- button을 눌렀을 때, 어떤 기능을 수행하는지 구현하는 부분
 
               //-------로그인 버튼을 눌렀을 때, 기존에 로그인했던 아이디이면 그냥 넘어가고 처음 로그인한 아이디이면 user collection에 user에 정보들을 추가합니다.--------------
@@ -164,7 +144,6 @@ class _LoginPageState extends State {
                     builder: (context) => const MainHomePage(),
                   ),
                 );
-
               }
             },
           ),
