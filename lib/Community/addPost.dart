@@ -12,6 +12,8 @@ class AddPost extends StatefulWidget {
 class _AddPostState extends State<AddPost> {
   final _titleController = TextEditingController();
   final _detailController = TextEditingController();
+  late QuerySnapshot querySnapshot;
+  late CollectionReference userDatabase;
 
   FirebaseAuth auth = FirebaseAuth.instance;
   late CollectionReference database;
@@ -21,6 +23,7 @@ class _AddPostState extends State<AddPost> {
     super.initState();
     database = FirebaseFirestore.instance
         .collection('Community');
+    userDatabase = FirebaseFirestore.instance.collection('user');
   }
 
 
@@ -77,10 +80,21 @@ class _AddPostState extends State<AddPost> {
       Expanded(
         child: TextButton(
             onPressed: () async {
+              querySnapshot = await userDatabase.get();
+              String name = '익명';
+
+              for (int i = 0; i < querySnapshot.docs.length; i++) {
+                var a = querySnapshot.docs[i];
+
+                if (a.get('uid') == auth.currentUser?.uid) {
+                  name = a.get('name');
+                }
+              }
 
               database.add({
                 'title': _titleController.text,
                 'detail': _detailController.text,
+                'author': name,
                 'user_id': auth.currentUser?.uid,
                 'like': 0
               });

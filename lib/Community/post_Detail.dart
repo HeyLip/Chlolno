@@ -3,12 +3,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class PostDetail extends StatefulWidget {
+  final String author;
   final String docId;
   final String title;
   final String detail;
 
   const PostDetail(
       {Key? key,
+      required this.author,
       required this.docId,
       required this.title,
       required this.detail})
@@ -24,6 +26,7 @@ class _PostDetailState extends State<PostDetail> {
   late CollectionReference database;
   late CollectionReference userDatabase;
   late CollectionReference commentsDatabase;
+  late QuerySnapshot querySnapshot;
 
   @override
   void initState() {
@@ -33,7 +36,7 @@ class _PostDetailState extends State<PostDetail> {
     commentsDatabase = database.doc(widget.docId).collection("Comments");
   }
 
-  List<Container> _buildListCards(
+  List<Container> _commentsListCards(
       BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
     final ThemeData theme = Theme.of(context);
 
@@ -41,35 +44,50 @@ class _PostDetailState extends State<PostDetail> {
       // DateTime _dateTime = DateTime.parse(document['expirationDate'].toDate().toString());
       return Container(
           margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(15.0),
+          padding: const EdgeInsets.all(10.0),
           decoration: const BoxDecoration(
             color: Color(0xFFFFFFFF),
             borderRadius: BorderRadius.all(Radius.circular(15)),
           ),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               const SizedBox(
                 width: 30,
               ),
               SizedBox(
                 width: 174,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: <Widget>[
-                    Text(
-                      document['user_id'],
-                      style: theme.textTheme.headline6,
-                      maxLines: 1,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          document['name'],
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        Text(
+                          document['comment'],
+                          style: const TextStyle(fontSize: 15),
+                          maxLines: 1,
+                        ),
+                        const SizedBox(height: 8.0),
+                      ],
                     ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    Text(
-                      document['comment'],
-                      style: theme.textTheme.headline6,
-                      maxLines: 1,
-                    ),
-                    const SizedBox(height: 8.0),
+                    // IconButton(
+                    //   icon: const Icon(Icons.delete),
+                    //   color: Colors.black,
+                    //   onPressed: () {
+                    //
+                    //   },
+                    // )
                   ],
                 ),
               ),
@@ -78,38 +96,39 @@ class _PostDetailState extends State<PostDetail> {
     }).toList();
   }
 
-
   Widget likeSection(Map<String, dynamic> data) {
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(10),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
           Row(
-            children: <Widget> [
+            children: <Widget>[
               IconButton(
                   onPressed: () async {
                     int i;
-                    QuerySnapshot querySnapshot = await database.doc(widget.docId).collection('like_Users').get();
+                    QuerySnapshot querySnapshot = await database
+                        .doc(widget.docId)
+                        .collection('like_Users')
+                        .get();
 
-                    for(i = 0; i < querySnapshot.docs.length; i++){
+                    for (i = 0; i < querySnapshot.docs.length; i++) {
                       var a = querySnapshot.docs[i];
 
-                      if(a.get('uid') == auth.currentUser?.uid){
-                        ScaffoldMessenger
-                            .of(context)
-                            .showSnackBar(
-                            const SnackBar(
-                              duration: Duration(seconds: 2),
-                              content: Text("You can only do it once!!",
-                                  style: TextStyle(fontSize: 20,)),
-                            )
-                        );
+                      if (a.get('uid') == auth.currentUser?.uid) {
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(const SnackBar(
+                          duration: Duration(seconds: 2),
+                          content: Text("You can only do it once!!",
+                              style: TextStyle(
+                                fontSize: 20,
+                              )),
+                        ));
                         break;
                       }
                     }
 
-                    if(i == (querySnapshot.docs.length)){
+                    if (i == (querySnapshot.docs.length)) {
                       database.doc(widget.docId).collection('like_Users').add({
                         'uid': auth.currentUser?.uid,
                       });
@@ -120,23 +139,24 @@ class _PostDetailState extends State<PostDetail> {
                         'like': data['like'],
                       });
 
-                      ScaffoldMessenger
-                          .of(context)
-                          .showSnackBar(
-                          const SnackBar(
-                            duration: Duration(seconds: 2),
-                            content: Text("I LIKE IT!",
-                              style: TextStyle(fontSize: 20),),
-                          )
-                      );
+                      // ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      //   duration: Duration(seconds: 2),
+                      //   content: Text(
+                      //     "I LIKE IT!",
+                      //     style: TextStyle(fontSize: 20),
+                      //   ),
+                      // ));
                     }
                   },
                   icon: const Icon(
                     Icons.thumb_up,
-                    size: 30,
+                    size: 15,
                     color: Colors.red,
                   )),
-              Text('${data['like']}', style: const TextStyle(color: Colors.red, fontSize: 20),),
+              Text(
+                '${data['like']}',
+                style: const TextStyle(color: Colors.red, fontSize: 15),
+              ),
             ],
           ),
         ],
@@ -148,15 +168,26 @@ class _PostDetailState extends State<PostDetail> {
   @override
   Widget build(BuildContext context) {
     Widget textSection = Container(
-      padding: const EdgeInsets.all(32.0),
-      child: Text(
-        widget.detail,
-        style: const TextStyle(fontSize: 20),
-        softWrap: true,
+      padding: const EdgeInsets.fromLTRB(20.0, 32.0, 20.0, 0.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget> [
+          Text(
+            widget.author,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            softWrap: true,
+          ),
+          const SizedBox(height: 10,),
+          Text(
+            widget.detail,
+            style: const TextStyle(fontSize: 15),
+            softWrap: true,
+          )
+        ],
       ),
     );
 
-    Widget _buildTextComposer() {
+    Widget _addComment() {
       return IconTheme(
         data: IconThemeData(color: Theme.of(context).backgroundColor),
         child: Container(
@@ -174,8 +205,20 @@ class _PostDetailState extends State<PostDetail> {
                   margin: const EdgeInsets.symmetric(horizontal: 4.0),
                   child: IconButton(
                     icon: const Icon(Icons.send),
-                    onPressed: () {
+                    onPressed: () async {
+                      querySnapshot = await userDatabase.get();
+                      String name = '익명';
+
+                      for (int i = 0; i < querySnapshot.docs.length; i++) {
+                        var a = querySnapshot.docs[i];
+
+                        if (a.get('uid') == auth.currentUser?.uid) {
+                          name = a.get('name');
+                        }
+                      }
+
                       database.doc(widget.docId).collection("Comments").add({
+                        'name': name,
                         'comment': _commentController.text,
                         'user_id': auth.currentUser?.uid,
                       });
@@ -196,11 +239,41 @@ class _PostDetailState extends State<PostDetail> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          textSection,
-          const Divider(height: 1.0),
+          StreamBuilder<DocumentSnapshot>(
+            stream: database.doc(widget.docId).snapshots(),
+            builder: (BuildContext context,
+                AsyncSnapshot<DocumentSnapshot> snapshot) {
+              Map<String, dynamic> data =
+                  snapshot.data!.data() as Map<String, dynamic>;
+
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text('Error: ${snapshot.error}'),
+                );
+              }
+              switch (snapshot.connectionState) {
+                case ConnectionState.waiting:
+                  return const Center(
+                    child: Text(''),
+                  );
+                default:
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[textSection, likeSection(data)],
+                  );
+              }
+            },
+          ),
+          const Divider(
+            height: 2.0,
+            color: Colors.black,
+          ),
           Container(
             padding: const EdgeInsets.only(left: 20.0, top: 10.0),
-            child: const Text('Comments', style: TextStyle(fontSize: 17.0),),
+            child: const Text(
+              'Comments',
+              style: TextStyle(fontSize: 17.0),
+            ),
           ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
@@ -220,8 +293,8 @@ class _PostDetailState extends State<PostDetail> {
                   default:
                     return ListView(
                         padding: const EdgeInsets.all(16.0),
-                        children:
-                            _buildListCards(context, snapshot) // Changed code
+                        children: _commentsListCards(
+                            context, snapshot) // Changed code
                         );
                 }
               },
@@ -229,7 +302,7 @@ class _PostDetailState extends State<PostDetail> {
           ),
           Container(
             decoration: BoxDecoration(color: Theme.of(context).cardColor),
-            child: _buildTextComposer(),
+            child: _addComment(),
           )
         ],
       ),

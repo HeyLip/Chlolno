@@ -34,6 +34,7 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
           Navigator.push(context,
               MaterialPageRoute<void>(builder: (BuildContext context) {
                 return PostDetail(
+                  author: document['author'],
                   docId: document.id,
                   title: document['title'],
                   detail: document['detail'],
