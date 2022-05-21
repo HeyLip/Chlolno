@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'multiResult.dart';
+import 'result.dart';
 
 class SearchHomePage extends StatefulWidget {
 
@@ -25,7 +27,7 @@ class _SearchHomePageState extends State<SearchHomePage> {
             SingleChildScrollView(
                 child: Column(
                   children: <Widget>[
-                    SizedBox(height: 50,),
+                    const SizedBox(height: 50,),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 10.0),
                       child: TextField(
@@ -35,8 +37,7 @@ class _SearchHomePageState extends State<SearchHomePage> {
                           labelText: 'Input Summoner Name',
                           hintText: 'Enter Summoner names',
                         ),
-
-                      ),
+                      ), //Summoner Name 입력받는 부분
                     ),
                   ],
                 ),
@@ -47,13 +48,20 @@ class _SearchHomePageState extends State<SearchHomePage> {
                   summonerNameList = textCutter(inputText);
                   setState((){});
 
-                  /*if(summonerNameList!.length == 1){
-                    Navigator.pushNamed(context, 'Result');
+                  if(summonerNameList!.length == 1){
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ResultPage(name: summonerNameList![0],))
+                    ); // 입력 Summoner Name 하나면 결과페이지
                   }
                   else{
-                    Navigator.pushNamed(context, 'MultiResult');
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => MultiResultPage(names: summonerNameList!,))
+                    ); // 입력 Summoner Name 여러개면 멀티서치
                   }
-                   */
                 },
                 child: const Text('Search')
             ),
@@ -72,5 +80,5 @@ List<String> textCutter(String text){
     tl[i] = tl[i].trim();
   }
   return tl;
-}
+} // ,로 스트링 잘라서 리스트로 리턴
 
