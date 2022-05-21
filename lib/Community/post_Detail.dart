@@ -22,12 +22,14 @@ class _PostDetailState extends State<PostDetail> {
   final _commentController = TextEditingController();
   FirebaseAuth auth = FirebaseAuth.instance;
   late CollectionReference database;
+  late CollectionReference userDatabase;
   late CollectionReference commentsDatabase;
 
   @override
   void initState() {
     super.initState();
     database = FirebaseFirestore.instance.collection('Community');
+    userDatabase = FirebaseFirestore.instance.collection('user');
     commentsDatabase = database.doc(widget.docId).collection("Comments");
   }
 
@@ -74,6 +76,73 @@ class _PostDetailState extends State<PostDetail> {
             ],
           ));
     }).toList();
+  }
+
+
+  Widget likeSection(Map<String, dynamic> data) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Row(
+            children: <Widget> [
+              IconButton(
+                  onPressed: () async {
+                    int i;
+                    QuerySnapshot querySnapshot = await database.doc(widget.docId).collection('like_Users').get();
+
+                    for(i = 0; i < querySnapshot.docs.length; i++){
+                      var a = querySnapshot.docs[i];
+
+                      if(a.get('uid') == auth.currentUser?.uid){
+                        ScaffoldMessenger
+                            .of(context)
+                            .showSnackBar(
+                            const SnackBar(
+                              duration: Duration(seconds: 2),
+                              content: Text("You can only do it once!!",
+                                  style: TextStyle(fontSize: 20,)),
+                            )
+                        );
+                        break;
+                      }
+                    }
+
+                    if(i == (querySnapshot.docs.length)){
+                      database.doc(widget.docId).collection('like_Users').add({
+                        'uid': auth.currentUser?.uid,
+                      });
+
+                      data['like'] = data['like'] + 1;
+
+                      database.doc(widget.docId).update({
+                        'like': data['like'],
+                      });
+
+                      ScaffoldMessenger
+                          .of(context)
+                          .showSnackBar(
+                          const SnackBar(
+                            duration: Duration(seconds: 2),
+                            content: Text("I LIKE IT!",
+                              style: TextStyle(fontSize: 20),),
+                          )
+                      );
+                    }
+                  },
+                  icon: const Icon(
+                    Icons.thumb_up,
+                    size: 30,
+                    color: Colors.red,
+                  )),
+              Text('${data['like']}', style: const TextStyle(color: Colors.red, fontSize: 20),),
+            ],
+          ),
+        ],
+      ),
+      // const FavoriteWidget(),
+    );
   }
 
   @override
