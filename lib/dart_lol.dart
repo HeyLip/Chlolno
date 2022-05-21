@@ -52,7 +52,7 @@ class League {
   }
 
   Future<List<Game>?> getGameHistory(
-      {required String puuid, required String summonerName, int start = 0, int count = 10}) async {
+      {required String puuid, required int start, int count = 100}) async {
     var url =
         'https://${serverMap[server]}.api.riotgames.com/lol/match/v5/matches/by-puuid/$puuid/ids?start=$start&count=$count&api_key=$apiToken';
     var response = await http.get(
@@ -69,7 +69,7 @@ class League {
       );
       final match = json.decode(response.body);
       gameList!.add(
-        Game.fromJson(json.decode(json.encode(match)), this.apiToken, puuid, this.server),
+        Game.fromJson(json.decode(json.encode(match)), apiToken, puuid, server),
       );
     }
     return gameList;
