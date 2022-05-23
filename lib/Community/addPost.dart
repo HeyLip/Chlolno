@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -14,8 +17,11 @@ class _AddPostState extends State<AddPost> {
   final _titleController = TextEditingController();
   final _detailController = TextEditingController();
   PickedFile? _image;
+  late Reference firebaseStorageRef;
   late QuerySnapshot querySnapshot;
   late CollectionReference userDatabase;
+  late UploadTask uploadTask;
+  late var downloadUrl;
 
   FirebaseAuth auth = FirebaseAuth.instance;
   late CollectionReference database;
@@ -86,7 +92,16 @@ class _AddPostState extends State<AddPost> {
             });
           },
           tooltip: 'Pick Image',
-          child: Icon(Icons.wallpaper),
+          child: const Icon(Icons.wallpaper),
+        ),
+        Container(
+          width: MediaQuery.of(context).size.width / 3,
+          height: 150,
+          child: Center(
+            child: _image == null
+                ? const Text('No image selected.')
+                : Image.file(File(_image!.path)),
+          ),
         )
       ],
     );
@@ -110,6 +125,19 @@ class _AddPostState extends State<AddPost> {
               querySnapshot = await userDatabase.get();
               String name = '익명';
 
+              if(_image != null){
+                firebaseStorageRef = firebase_storage.FirebaseStorage.instance
+                    .ref()
+                    .child('Community')
+                    .child('${_titleController.text}.png');
+
+                uploadTask = firebaseStorageRef.putFile(File(_image!.path), SettableMetadata(contentType: 'image/png'));
+
+                await uploadTask.whenComplete(() => null);
+
+                downloadUrl = await firebaseStorageRef.getDownloadURL();
+              }
+
               for (int i = 0; i < querySnapshot.docs.length; i++) {
                 var a = querySnapshot.docs[i];
 
@@ -124,6 +152,7 @@ class _AddPostState extends State<AddPost> {
                 'author': name,
                 'user_id': auth.currentUser?.uid,
                 'createTime': FieldValue.serverTimestamp(),
+                'photoUrl': downloadUrl,
                 'like': 0
               });
 
