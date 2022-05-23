@@ -256,85 +256,91 @@ class _PostDetailState extends State<PostDetail> {
     }
 
     return Scaffold(
-      resizeToAvoidBottomInset : false, // 화면 밀림 방지
+      // resizeToAvoidBottomInset : false, // 화면 밀림 방지
       appBar: AppBar(
         title: Text(widget.title),
         centerTitle: true,
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
+      body: Container(
+        child: Column(
+          children: <Widget> [
+            Flexible(
+              child: ListView(
+                // crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
 
-          StreamBuilder<DocumentSnapshot>(
-            stream: database.doc(widget.docId).snapshots(),
-            builder: (BuildContext context,
-                AsyncSnapshot<DocumentSnapshot> snapshot) {
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: database.doc(widget.docId).snapshots(),
+                    builder: (BuildContext context,
+                        AsyncSnapshot<DocumentSnapshot> snapshot) {
 
-              Map<String, dynamic> data =
-              snapshot.data!.data() as Map<String, dynamic>;
+                      Map<String, dynamic> data =
+                      snapshot.data!.data() as Map<String, dynamic>;
 
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text('Error: ${snapshot.error}'),
-                );
-              }
-              switch (snapshot.connectionState) {
-                case ConnectionState.waiting:
-                  return const Center(
-                    child: Text(''),
-                  );
-                default:
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[textSection(data), likeSection(data)],
-                  );
-              }
-            },
-          ),
-          // const Divider(
-          //   height: 2.0,
-          //   color: Colors.black,
-          // ),
-          Container(
-            padding: const EdgeInsets.only(left: 20.0, top: 10.0),
-            child: const Text(
-              'Comments',
-              style: TextStyle(fontSize: 17.0),
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Text('Error: ${snapshot.error}'),
+                        );
+                      }
+                      switch (snapshot.connectionState) {
+                        case ConnectionState.waiting:
+                          return const Center(
+                            child: Text(''),
+                          );
+                        default:
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[textSection(data), likeSection(data)],
+                          );
+                      }
+                    },
+                  ),
+                  // const Divider(
+                  //   height: 2.0,
+                  //   color: Colors.black,
+                  // ),
+                  Container(
+                    padding: const EdgeInsets.only(left: 20.0, top: 10.0),
+                    child: const Text(
+                      'Comments',
+                      style: TextStyle(fontSize: 17.0),
+                    ),
+                  ),
+                  StreamBuilder<QuerySnapshot>(
+                    stream: commentsDatabase.snapshots(),
+                    builder: (BuildContext context,
+                        AsyncSnapshot<QuerySnapshot> snapshot) {
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Text('Error: ${snapshot.error}'),
+                        );
+                      }
+                      switch (snapshot.connectionState) {
+                        case ConnectionState.waiting:
+                          return const Center(
+                            child: Text(''),
+                          );
+                        default:
+                          return Column(
+                            // physics:  const ClampingScrollPhysics(),
+                            //   physics: const NeverScrollableScrollPhysics (),
+                            //   padding: const EdgeInsets.all(16.0),
+                              children: _commentsListCards(
+                                  context, snapshot) // Changed code
+                          );
+                      }
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: commentsDatabase.snapshots(),
-              builder: (BuildContext context,
-                  AsyncSnapshot<QuerySnapshot> snapshot) {
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Text('Error: ${snapshot.error}'),
-                  );
-                }
-                switch (snapshot.connectionState) {
-                  case ConnectionState.waiting:
-                    return const Center(
-                      child: Text(''),
-                    );
-                  default:
-                    return ListView(
-                      // physics:  const ClampingScrollPhysics(),
-                      //   physics: const NeverScrollableScrollPhysics (),
-                      //   padding: const EdgeInsets.all(16.0),
-                        children: _commentsListCards(
-                            context, snapshot) // Changed code
-                    );
-                }
-              },
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(color: Theme.of(context).cardColor),
-            child: _addComment(),
-          )
-        ],
-      ),
+            Container(
+              decoration: BoxDecoration(color: Theme.of(context).cardColor),
+              child: _addComment(),
+            )
+          ],
+        ),
+      )
     );
   }
 }
