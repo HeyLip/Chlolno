@@ -59,30 +59,35 @@ class _PostDetailState extends State<PostDetail> {
                 width: 30,
               ),
               SizedBox(
-                width: 174,
+                width: 300,
                 child: Row(
                   children: <Widget>[
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          document['name'],
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
+                    Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+
+                            Text(
+                              document['name'],
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 10,
+                            ),
+                            const SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              document['comment'],
+                              style: const TextStyle(fontSize: 15),
+                              maxLines: 10,
+                              softWrap: true,
+                              overflow: TextOverflow.clip,
+                            ),
+                            const SizedBox(height: 8.0),
+                          ],
                         ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        Text(
-                          document['comment'],
-                          style: const TextStyle(fontSize: 15),
-                          maxLines: 1,
-                        ),
-                        const SizedBox(height: 8.0),
-                      ],
                     ),
                     // IconButton(
                     //   icon: const Icon(Icons.delete),
@@ -251,6 +256,7 @@ class _PostDetailState extends State<PostDetail> {
     }
 
     return Scaffold(
+      resizeToAvoidBottomInset : false, // 화면 밀림 방지
       appBar: AppBar(
         title: Text(widget.title),
         centerTitle: true,
@@ -265,7 +271,7 @@ class _PostDetailState extends State<PostDetail> {
                 AsyncSnapshot<DocumentSnapshot> snapshot) {
 
               Map<String, dynamic> data =
-                  snapshot.data!.data() as Map<String, dynamic>;
+              snapshot.data!.data() as Map<String, dynamic>;
 
               if (snapshot.hasError) {
                 return Center(
@@ -313,10 +319,12 @@ class _PostDetailState extends State<PostDetail> {
                     );
                   default:
                     return ListView(
-                        padding: const EdgeInsets.all(16.0),
+                      // physics:  const ClampingScrollPhysics(),
+                      //   physics: const NeverScrollableScrollPhysics (),
+                      //   padding: const EdgeInsets.all(16.0),
                         children: _commentsListCards(
                             context, snapshot) // Changed code
-                        );
+                    );
                 }
               },
             ),
