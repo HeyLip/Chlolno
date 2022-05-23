@@ -52,15 +52,15 @@ class League {
   }
 
   Future<List<Game>?> getGameHistory(
-      {required String puuid, required int start, int count = 100}) async {
+      {required String puuid, required int start, int count = 5}) async {
     var url =
         'https://${serverMap[server]}.api.riotgames.com/lol/match/v5/matches/by-puuid/$puuid/ids?start=$start&count=$count&api_key=$apiToken';
     var response = await http.get(
       Uri.parse(url),
     );
-    List<dynamic> matchIdList = json.decode(response.body);
-    print(matchIdList);
+    var matchIdList = json.decode(response.body); // Map<String, dynamic>
 
+    //print(matchIdList);
     gameList = [];
     for (String id in matchIdList) {
       var url = 'https://${serverMap[server]}.api.riotgames.com/lol/match/v5/matches/$id?api_key=$apiToken';
