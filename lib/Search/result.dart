@@ -172,13 +172,12 @@ class _ResultPageState extends State<ResultPage> {
               : const Text('챔피언을 골라주세요.'),
           ElevatedButton(
               onPressed: () async{
-                games = await updateGameHistory(games, user.puuid);
-                setState((){});
+                games = await updateGameHistory(games, user.puuid); // 5게임 더
+                setState((){}); // 화면다시그리기
               },
               child: Text('Update 5 games / Total Elements: $gameCount'),
-
-
           ),
+          const SizedBox(height: 10,),
           Expanded(
             child: GridView.builder(
               itemCount: champions.length, //item 개수
@@ -192,21 +191,21 @@ class _ResultPageState extends State<ResultPage> {
                 //item 의 반목문 항목 형성
                 return GestureDetector(
                   onTap: () {
-                    isMet = false;
-                    championName = champions.elementAt(index);
-                    isPicked = true;
-                    metTime = championMet(games, championName);
+                    isMet = false; // 만났니?변수 초기화
+                    championName = champions.elementAt(index); // 고른챔피언이뭐야
+                    isPicked = true; // 골랐어.
+                    metTime = championMet(games, championName); // 언제만났어
                     if(isMet != true){
-                      metTime = getLastGameTime(games);
-                    }
-                    setState((){});
+                      metTime = getLastGameTime(games); // 마지막게임시간
+                    } // 안만났으면?
+                    setState((){}); // 화면다시그리기
                   },
                   child: Column(
                     children: [
                       Image.network(
                         'https://ddragon.leagueoflegends.com/cdn/12.9.1/img/champion/${champions.elementAt(index)}.png',
-                        height: 50,
-                        width: 50,
+                        height: 60,
+                        width: 60,
                       ),
                       /*Expanded(
                         child: Container(
