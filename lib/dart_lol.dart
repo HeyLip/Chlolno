@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'LeagueStuff/game.dart';
 import 'LeagueStuff/summoner.dart';
+import 'LeagueStuff/ingame.dart';
 
 class League {
   String apiToken;
@@ -73,5 +74,21 @@ class League {
       );
     }
     return gameList;
+  }
+
+  Future<List<InGame?>> getCurrentGame({required String userName, required String userId}) async{
+    var url =
+        'https://${serverMap[server]}.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/$userId?api_key=$apiToken';
+    var response = await http.get(
+      Uri.parse(url),
+    );
+
+    var currentGame = json.decode(response.body);
+
+    List<InGame>? userList = [];
+    for(int i=0; i<10; i++){
+      userList.add(InGame.fromJson(json.decode(json.encode(currentGame)), i));
+    }
+    return userList;
   }
 }
