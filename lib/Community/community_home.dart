@@ -38,6 +38,7 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
                   docId: document.id,
                   title: document['title'],
                   detail: document['detail'],
+                  createTime: document['createTime'],
                 );
               }));
         },

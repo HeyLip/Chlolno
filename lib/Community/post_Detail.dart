@@ -1,19 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class PostDetail extends StatefulWidget {
   final String author;
   final String docId;
   final String title;
   final String detail;
+  final Timestamp createTime;
 
   const PostDetail(
       {Key? key,
       required this.author,
       required this.docId,
       required this.title,
-      required this.detail})
+      required this.detail,
+      required this.createTime})
       : super(key: key);
 
   @override
@@ -167,15 +170,26 @@ class _PostDetailState extends State<PostDetail> {
 
   @override
   Widget build(BuildContext context) {
+    DateTime _dateTime = DateTime.parse(widget.createTime.toDate().toString());
     Widget textSection = Container(
       padding: const EdgeInsets.fromLTRB(20.0, 32.0, 20.0, 0.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget> [
-          Text(
-            widget.author,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            softWrap: true,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                widget.author,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                softWrap: true,
+              ),
+              Text(
+                DateFormat('yyyy-MM-dd kk:mm').format(_dateTime),
+                style: const TextStyle(fontSize: 10),
+                softWrap: true,
+              )
+            ],
           ),
           const SizedBox(height: 10,),
           Text(
@@ -239,10 +253,12 @@ class _PostDetailState extends State<PostDetail> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+
           StreamBuilder<DocumentSnapshot>(
             stream: database.doc(widget.docId).snapshots(),
             builder: (BuildContext context,
                 AsyncSnapshot<DocumentSnapshot> snapshot) {
+
               Map<String, dynamic> data =
                   snapshot.data!.data() as Map<String, dynamic>;
 
@@ -264,10 +280,10 @@ class _PostDetailState extends State<PostDetail> {
               }
             },
           ),
-          const Divider(
-            height: 2.0,
-            color: Colors.black,
-          ),
+          // const Divider(
+          //   height: 2.0,
+          //   color: Colors.black,
+          // ),
           Container(
             padding: const EdgeInsets.only(left: 20.0, top: 10.0),
             child: const Text(

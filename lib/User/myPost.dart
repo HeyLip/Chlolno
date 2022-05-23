@@ -37,6 +37,7 @@ class _MyPostState extends State<MyPost> {
                   docId: document.id,
                   title: document['title'],
                   detail: document['detail'],
+                  createTime: document['createTime']
                 );
               }));
         },

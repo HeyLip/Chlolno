@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AddPost extends StatefulWidget {
   const AddPost({Key? key}) : super(key: key);
@@ -12,6 +13,7 @@ class AddPost extends StatefulWidget {
 class _AddPostState extends State<AddPost> {
   final _titleController = TextEditingController();
   final _detailController = TextEditingController();
+  PickedFile? _image;
   late QuerySnapshot querySnapshot;
   late CollectionReference userDatabase;
 
@@ -36,20 +38,27 @@ class _AddPostState extends State<AddPost> {
         automaticallyImplyLeading: false,
       ),
       body: Column(
-        children: <Widget> [
+          children: <Widget> [
+            Expanded(
+                child: ListView(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20.0),
+                      child: TextBox("Title", _titleController),
+                    ),
 
-          Container(
-            padding: const EdgeInsets.all(20.0),
-            child: TextBox("Title", _titleController),
-          ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: TextBox("Detail", _detailController),
+                    ),
+                  ],
+                )
+            ),
+            getImageButton(),
+            cancelSaveButton(),
+          ],
+        ),
 
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: TextBox("Detail", _detailController),
-          ),
-          cancelSaveButton(),
-        ],
-      ),
     );
   }
 
@@ -62,6 +71,24 @@ class _AddPostState extends State<AddPost> {
         border: const OutlineInputBorder(),
         labelText: s,
       ),
+    );
+  }
+
+  Row getImageButton() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: <Widget> [
+        FloatingActionButton(
+          onPressed: () async {
+            var image = await ImagePicker.platform.pickImage(source: ImageSource.gallery);
+            setState(() {
+              _image = image!;
+            });
+          },
+          tooltip: 'Pick Image',
+          child: Icon(Icons.wallpaper),
+        )
+      ],
     );
   }
 
@@ -96,6 +123,7 @@ class _AddPostState extends State<AddPost> {
                 'detail': _detailController.text,
                 'author': name,
                 'user_id': auth.currentUser?.uid,
+                'createTime': FieldValue.serverTimestamp(),
                 'like': 0
               });
 
