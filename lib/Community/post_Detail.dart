@@ -171,35 +171,40 @@ class _PostDetailState extends State<PostDetail> {
   @override
   Widget build(BuildContext context) {
     DateTime _dateTime = DateTime.parse(widget.createTime.toDate().toString());
-    Widget textSection = Container(
-      padding: const EdgeInsets.fromLTRB(20.0, 32.0, 20.0, 0.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget> [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                widget.author,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                softWrap: true,
-              ),
-              Text(
-                DateFormat('yyyy-MM-dd kk:mm').format(_dateTime),
-                style: const TextStyle(fontSize: 10),
-                softWrap: true,
-              )
-            ],
-          ),
-          const SizedBox(height: 10,),
-          Text(
-            widget.detail,
-            style: const TextStyle(fontSize: 15),
-            softWrap: true,
-          )
-        ],
-      ),
-    );
+    Widget textSection(Map<String, dynamic> data) {
+      return Container(
+        padding: const EdgeInsets.fromLTRB(20.0, 32.0, 20.0, 0.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget> [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  widget.author,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  softWrap: true,
+                ),
+                Text(
+                  DateFormat('yyyy-MM-dd kk:mm').format(_dateTime),
+                  style: const TextStyle(fontSize: 10),
+                  softWrap: true,
+                )
+              ],
+            ),
+            const SizedBox(height: 10,),
+            if (data['photoUrl'] != null)
+              Image.network(data['photoUrl'],
+                  width: MediaQuery.of(context).size.width, height: 320, fit: BoxFit.fitWidth),
+            Text(
+              widget.detail,
+              style: const TextStyle(fontSize: 15),
+              softWrap: true,
+            )
+          ],
+        ),
+      );
+    }
 
     Widget _addComment() {
       return IconTheme(
@@ -275,7 +280,7 @@ class _PostDetailState extends State<PostDetail> {
                 default:
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[textSection, likeSection(data)],
+                    children: <Widget>[textSection(data), likeSection(data)],
                   );
               }
             },
