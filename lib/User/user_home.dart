@@ -167,17 +167,17 @@ class _UserHomePageState extends State<UserHomePage> {
       child: Row(
         children: <Widget>[
           Container(
-            width: 100,
-            height: 100,
+            width: 90,
+            height: 90,
             decoration:
                 const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFB2DEB8)),
             child: ClipOval(
               child: Container(
                   color: Colors.white,
-                  width: 70,
-                  height: 70,
+                  width: 100,
+                  height: 100,
                   child: Image.network(
-                      'http://handong.edu/site/handong/res/img/logo.png')),
+                      'https://firebasestorage.googleapis.com/v0/b/chlolno.appspot.com/o/%EA%B8%B0%EB%B3%B8_%ED%94%84%EB%A1%9C%ED%95%84.jpg?alt=media&token=a002d8e8-e634-43ec-9b98-196925b7231a')),
             ),
           ),
           const SizedBox(

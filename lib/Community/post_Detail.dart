@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -67,13 +68,27 @@ class _PostDetailState extends State<PostDetail> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
 
-                            Text(
-                              document['name'],
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 10,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: <Widget> [
+                                Text(
+                                  document['name'],
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 10,
+                                ),
+
+                                // IconButton(
+                                //   icon: const Icon(Icons.clear_rounded),
+                                //   iconSize: 15,
+                                //   color: Colors.black,
+                                //   onPressed: () {
+                                //
+                                //   },
+                                // )
+                              ],
                             ),
                             const SizedBox(
                               height: 10,
@@ -89,13 +104,6 @@ class _PostDetailState extends State<PostDetail> {
                           ],
                         ),
                     ),
-                    // IconButton(
-                    //   icon: const Icon(Icons.delete),
-                    //   color: Colors.black,
-                    //   onPressed: () {
-                    //
-                    //   },
-                    // )
                   ],
                 ),
               ),
@@ -176,6 +184,16 @@ class _PostDetailState extends State<PostDetail> {
   @override
   Widget build(BuildContext context) {
     DateTime _dateTime = DateTime.parse(widget.createTime.toDate().toString());
+
+    Future<bool> checkOwner() async {
+      DocumentSnapshot documentSnapshot = await database.doc(widget.docId).get();
+
+      if(auth.currentUser?.uid == documentSnapshot['user_id']){
+        return true;
+      }
+      return false;
+    }
+
     Widget textSection(Map<String, dynamic> data) {
       return Container(
         padding: const EdgeInsets.fromLTRB(20.0, 32.0, 20.0, 0.0),
@@ -260,6 +278,27 @@ class _PostDetailState extends State<PostDetail> {
       appBar: AppBar(
         title: Text(widget.title),
         centerTitle: true,
+        actions: <Widget>[
+          FutureBuilder<bool> (
+              future: checkOwner(),
+              builder: (BuildContext context, AsyncSnapshot<bool> snapshot){
+                if(snapshot.hasData){
+                  if(snapshot.data == true){
+                    return IconButton(
+                      icon: const Icon(Icons.delete),
+                      color: Colors.white,
+                      onPressed: () async {
+                        DocumentSnapshot documentSnapshot = await database.doc(widget.docId).get();
+                        Navigator.pop(context, true);
+                        database.doc(widget.docId).delete();
+                        FirebaseStorage.instance.refFromURL(documentSnapshot['photoUrl']).delete();
+                      },
+                    );
+                  }
+                }
+                return const Text('');
+              }),
+        ],
       ),
       body: Container(
         child: Column(
