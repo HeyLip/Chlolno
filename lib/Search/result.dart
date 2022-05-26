@@ -2,29 +2,28 @@ import 'package:chlolno/LeagueStuff/game.dart';
 import 'package:chlolno/LeagueStuff/summoner.dart';
 import 'package:flutter/material.dart';
 import 'package:chlolno/dart_lol.dart';
+import 'package:chlolno/LeagueStuff/ingame.dart';
+import 'package:chlolno/LeagueStuff/champ.dart';
 
-const String apikey = 'RGAPI-fe874f70-12cf-4e11-a2c8-fae1ad5e5d29';
+const String apikey = 'RGAPI-80ed21b5-7a3e-4ccf-9786-64e751a14592';
 const String server = 'kr';
 int gameCount = 0;
 final league = League(apiToken: apikey, server: server);
 DateTime flagTime = DateTime.now();
 bool isPicked = false, isMet = false;
+int inGamePrintCounter = 0;
 
-/*
-Future<Summoner> getSummoner(String sumName) async {
-  Summoner user;
+Future<Summoner?> getSummoner(String sumName) async {
+  Summoner? user;
   user = await league.getSummonerInfo(summonerName: sumName);
   return user;
 }  // summoner data 를 받아오는 부분
-
-
-Future<List<Game>?> getGameHistory(Summoner user) async {
+Future<List<Game>?> getGameHistory(Summoner? user) async {
   List<Game>? gameList;
-  gameList = await league.getGameHistory(puuid: user.puuid!, start: gameCount);
-  gameCount = gameCount + 100;
+  gameList = await league.getGameHistory(puuid: user!.puuid!, start: gameCount);
+  gameCount = gameCount + 5;
   return gameList;
-}*/ // game history 를 받아오는 부분
-
+} // game history 를 받아오는 부분
 Future<List<Game>?> updateGameHistory(dynamic games, String user) async {
   dynamic gameList;
   gameList = await league.getGameHistory(puuid: user, start: gameCount);
@@ -34,7 +33,6 @@ Future<List<Game>?> updateGameHistory(dynamic games, String user) async {
   }
   return games;
 }
-
 DateTime championMet(List<Game>? games, String champName) {
   DateTime championMet = flagTime;
   for (int i = 0; i < games!.length; i++) {
@@ -52,12 +50,29 @@ DateTime championMet(List<Game>? games, String champName) {
     return championMet;
   }
 }
-
 DateTime getLastGameTime(List<Game>? games) {
   DateTime lastGameTime;
   lastGameTime = games![games.length - 1].time!;
   lastGameTime = lastGameTime.add(const Duration(hours: 9));
   return lastGameTime;
+}
+Future<List<InGame>?> getCurrentGame(Summoner user) async{
+  List<InGame>? userList;
+  userList = await league.getCurrentGame(userName: user.summonerName!, userId: user.summonerID!);
+  if(userList == null){
+    userList!.clear();
+    return userList;
+  }
+  else{
+  //userList.sort((a, b) => a.teamID!.compareTo(b.teamID!));
+  return userList;
+  }
+}
+String getNameById(int champID) {
+  var champIDs = getChampIDs();
+  var idx = champIDs.indexOf(champID);
+  var champNames = getChampNames();
+  return champNames[idx];
 }
 
 class ResultPage extends StatefulWidget {
@@ -72,30 +87,28 @@ class ResultPage extends StatefulWidget {
 class _ResultPageState extends State<ResultPage> {
   String championName = '';
   DateTime metTime = DateTime.now();
-
   late String userName = '';
-  late var user;
-  late var games;
-
-  //late List<Game>? games;
-  //late Summoner user;
-/*user = await league.getSummonerInfo(summonerName: userName);
-    games = await league.getGameHistory(puuid: user.puuid!, start: gameCount);
-    */
-
-  void initialize() async {
-    user = await league.getSummonerInfo(summonerName: userName);
-    print(user);
-    games = await league.getGameHistory(puuid: user.puuid!, start: gameCount);
-    gameCount = gameCount + 5;
-    print(games);
-    setState(() {});
+  late Summoner? user;
+  late List<Game>? games;
+  List<InGame>? userList;
+  void initialize() async{
+    user = await getSummoner(userName);
+    if(user == null){
+      _showDialog();
+    }
+    else {
+      games = await getGameHistory(user);
+      setState(() {});
+    }
   }
 
   @override
   void initState() {
     super.initState();
     userName = widget.name;
+    isPicked = false;
+    isMet = false;
+    gameCount = 0;
     initialize();
   }
 
@@ -261,6 +274,66 @@ class _ResultPageState extends State<ResultPage> {
     'Zyra'
   ];
 
+  Widget _buildRowContext(userList){
+    String champName = getNameById(userList.championID);
+    inGamePrintCounter++;
+    if(inGamePrintCounter==6){
+      return Column(
+        children: [
+          const Divider(indent: 15, endIndent: 15, thickness: 2, color: Colors.black,),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              const SizedBox(width: 50,),
+              Image.network(
+                'https://ddragon.leagueoflegends.com/cdn/12.9.1/img/champion/$champName.png',
+                height: 30,
+                width: 30,
+              ),
+              Text(userList.summonerName),
+            ],
+          ),
+        ],
+      );
+    }
+    else{
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          const SizedBox(width: 50,),
+          Image.network(
+            'https://ddragon.leagueoflegends.com/cdn/12.9.1/img/champion/$champName.png',
+            height: 30,
+            width: 30,
+          ),
+          Text(userList.summonerName),
+        ],
+      );
+    }
+  }
+
+  void _showDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        // return object of type Dialog
+        return AlertDialog(
+          title: const Text("주 의"),
+          content: const Text("유저를 찾을 수 없습니다."),
+          actions: <Widget>[
+             TextButton(
+              child: const Text("돌아가기"),
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -271,13 +344,19 @@ class _ResultPageState extends State<ResultPage> {
           appBar: AppBar(
             title: const Text('Search Result'),
             centerTitle: true,
-            bottom: TabBar(
+            leading: IconButton(
+              onPressed: (){
+                Navigator.pop(context);
+              },
+              icon: const Icon(Icons.arrow_back),
+            ),
+            bottom: const TabBar(
               tabs: [
                 Tab(
-                    child: Text('Champion')
+                    child:  Text('Champion')
                 ),
                 Tab(
-                    child: Text('Ingame')
+                    child:  Text('InGame')
                 ),
               ],
             ),
@@ -302,8 +381,7 @@ class _ResultPageState extends State<ResultPage> {
                       : const Text('챔피언을 골라주세요.'),
                   ElevatedButton(
                     onPressed: () async {
-                      games =
-                      await updateGameHistory(games, user.puuid); // 5게임 더
+                      games = await updateGameHistory(games, user!.puuid!); // 5게임 더
                       setState(() {}); // 화면다시그리기
                     },
                     child: Text('Update 5 games / Total Elements: $gameCount'),
@@ -350,9 +428,24 @@ class _ResultPageState extends State<ResultPage> {
                   ),
                 ],
               ),
-              Container(
-                child: Icon(Icons.directions_car),
-              ),
+              Column(
+                children: [
+                  const SizedBox(height: 50,),
+                  userList == null ? const Text('게임 중이 아닙니다.')
+                  :
+                  Column(
+                    children: userList!.map((userList) => _buildRowContext(userList)).toList(),
+                  ),
+                  ElevatedButton(
+                      onPressed: () async{
+                        userList = await league.getCurrentGame(userName: user!.summonerName!, userId: user!.summonerID!);
+                        inGamePrintCounter = 0;
+                        setState((){});
+                      },
+                      child: const Text('불러오기'),
+                  ),
+                ],
+              )
             ],
           ),
         ),

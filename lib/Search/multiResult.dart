@@ -3,15 +3,15 @@ import 'package:chlolno/dart_lol.dart';
 import 'package:chlolno/LeagueStuff/game.dart';
 import 'package:chlolno/LeagueStuff/summoner.dart';
 
-const String apikey = 'RGAPI-0bb6f5a8-221a-4c1f-941a-fb262a0fe90f';
+const String apikey = 'RGAPI-80ed21b5-7a3e-4ccf-9786-64e751a14592';
 const String server = 'kr';
 int gameCount = 0;
 final league = League(apiToken: apikey, server: server);
 DateTime flagTime = DateTime.now();
 
 
-Future<Summoner> getSummoner(String sumName) async{
-  Summoner user;
+Future<Summoner?> getSummoner(String sumName) async{
+  Summoner? user;
   user = await league.getSummonerInfo(summonerName: sumName);
   return user;
 } // summoner data 를 받아오는 부분

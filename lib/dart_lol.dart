@@ -28,15 +28,18 @@ class League {
     this.server = server.toLowerCase();
   }
 
-  Future<Summoner> getSummonerInfo({String? summonerName}) async {
+  Future<Summoner?> getSummonerInfo({String? summonerName}) async {
     var url1 =
         'https://$server.api.riotgames.com/lol/summoner/v4/summoners/by-name/$summonerName?api_key=$apiToken';
     var response1 = await http.get(
       Uri.parse(url1),
     );
-    Summoner sum = Summoner.fromJson(json.decode(response1.body,),);
+    if(response1.statusCode == 404){
+      return null;
+    }
+    Summoner? sum = Summoner.fromJson(json.decode(response1.body,),);
     String? sumId = sum.summonerID;
-    
+
     var url2 =
         'https://$server.api.riotgames.com/lol/league/v4/entries/by-summoner/$sumId?api_key=$apiToken';
     var response2 = await http.get(
@@ -76,19 +79,25 @@ class League {
     return gameList;
   }
 
-  Future<List<InGame?>> getCurrentGame({required String userName, required String userId}) async{
-    var url =
-        'https://${serverMap[server]}.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/$userId?api_key=$apiToken';
+  Future<List<InGame>?> getCurrentGame({required String userName, required String userId}) async{
+    var url = 'https://$server.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/$userId?api_key=$apiToken';
     var response = await http.get(
       Uri.parse(url),
     );
-
-    var currentGame = json.decode(response.body);
-
     List<InGame>? userList = [];
-    for(int i=0; i<10; i++){
-      userList.add(InGame.fromJson(json.decode(json.encode(currentGame)), i));
+    if(response.statusCode != 404) {
+
+      var currentGame = json.decode(response.body);
+
+      for (int i = 0; i < 10; i++) {
+        userList.add(InGame.fromJson(json.decode(json.encode(currentGame)), i));
+      }
+      return userList;
+      }
+    else {
+      return null;
+      }
     }
-    return userList;
-  }
+
 }
+
