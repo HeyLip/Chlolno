@@ -493,6 +493,12 @@ int getChampIDByName(String champName) {
   var champIDs = getChampIDs();
   return champIDs[idx];
 }
+String getNameById(int champID) {
+  var champIDs = getChampIDs();
+  var idx = champIDs.indexOf(champID);
+  var champNames = getChampNames();
+  return champNames[idx];
+}
 
 List<String> getChampNames() {
   return [

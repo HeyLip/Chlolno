@@ -59,30 +59,35 @@ class _PostDetailState extends State<PostDetail> {
                 width: 30,
               ),
               SizedBox(
-                width: 174,
+                width: 300,
                 child: Row(
                   children: <Widget>[
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          document['name'],
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
+                    Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+
+                            Text(
+                              document['name'],
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 10,
+                            ),
+                            const SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              document['comment'],
+                              style: const TextStyle(fontSize: 15),
+                              maxLines: 10,
+                              softWrap: true,
+                              overflow: TextOverflow.clip,
+                            ),
+                            const SizedBox(height: 8.0),
+                          ],
                         ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        Text(
-                          document['comment'],
-                          style: const TextStyle(fontSize: 15),
-                          maxLines: 1,
-                        ),
-                        const SizedBox(height: 8.0),
-                      ],
                     ),
                     // IconButton(
                     //   icon: const Icon(Icons.delete),
@@ -171,35 +176,40 @@ class _PostDetailState extends State<PostDetail> {
   @override
   Widget build(BuildContext context) {
     DateTime _dateTime = DateTime.parse(widget.createTime.toDate().toString());
-    Widget textSection = Container(
-      padding: const EdgeInsets.fromLTRB(20.0, 32.0, 20.0, 0.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget> [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                widget.author,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                softWrap: true,
-              ),
-              Text(
-                DateFormat('yyyy-MM-dd kk:mm').format(_dateTime),
-                style: const TextStyle(fontSize: 10),
-                softWrap: true,
-              )
-            ],
-          ),
-          const SizedBox(height: 10,),
-          Text(
-            widget.detail,
-            style: const TextStyle(fontSize: 15),
-            softWrap: true,
-          )
-        ],
-      ),
-    );
+    Widget textSection(Map<String, dynamic> data) {
+      return Container(
+        padding: const EdgeInsets.fromLTRB(20.0, 32.0, 20.0, 0.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget> [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  widget.author,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  softWrap: true,
+                ),
+                Text(
+                  DateFormat('yyyy-MM-dd kk:mm').format(_dateTime),
+                  style: const TextStyle(fontSize: 10),
+                  softWrap: true,
+                )
+              ],
+            ),
+            const SizedBox(height: 10,),
+            if (data['photoUrl'] != null)
+              Image.network(data['photoUrl'],
+                  width: MediaQuery.of(context).size.width, height: 320, fit: BoxFit.fitWidth),
+            Text(
+              widget.detail,
+              style: const TextStyle(fontSize: 15),
+              softWrap: true,
+            )
+          ],
+        ),
+      );
+    }
 
     Widget _addComment() {
       return IconTheme(
@@ -246,82 +256,91 @@ class _PostDetailState extends State<PostDetail> {
     }
 
     return Scaffold(
+      // resizeToAvoidBottomInset : false, // 화면 밀림 방지
       appBar: AppBar(
         title: Text(widget.title),
         centerTitle: true,
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
+      body: Container(
+        child: Column(
+          children: <Widget> [
+            Flexible(
+              child: ListView(
+                // crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
 
-          StreamBuilder<DocumentSnapshot>(
-            stream: database.doc(widget.docId).snapshots(),
-            builder: (BuildContext context,
-                AsyncSnapshot<DocumentSnapshot> snapshot) {
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: database.doc(widget.docId).snapshots(),
+                    builder: (BuildContext context,
+                        AsyncSnapshot<DocumentSnapshot> snapshot) {
 
-              Map<String, dynamic> data =
-                  snapshot.data!.data() as Map<String, dynamic>;
+                      Map<String, dynamic> data =
+                      snapshot.data!.data() as Map<String, dynamic>;
 
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text('Error: ${snapshot.error}'),
-                );
-              }
-              switch (snapshot.connectionState) {
-                case ConnectionState.waiting:
-                  return const Center(
-                    child: Text(''),
-                  );
-                default:
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[textSection, likeSection(data)],
-                  );
-              }
-            },
-          ),
-          // const Divider(
-          //   height: 2.0,
-          //   color: Colors.black,
-          // ),
-          Container(
-            padding: const EdgeInsets.only(left: 20.0, top: 10.0),
-            child: const Text(
-              'Comments',
-              style: TextStyle(fontSize: 17.0),
-            ),
-          ),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: commentsDatabase.snapshots(),
-              builder: (BuildContext context,
-                  AsyncSnapshot<QuerySnapshot> snapshot) {
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Text('Error: ${snapshot.error}'),
-                  );
-                }
-                switch (snapshot.connectionState) {
-                  case ConnectionState.waiting:
-                    return const Center(
-                      child: Text(''),
-                    );
-                  default:
-                    return ListView(
-                        padding: const EdgeInsets.all(16.0),
-                        children: _commentsListCards(
-                            context, snapshot) // Changed code
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Text('Error: ${snapshot.error}'),
                         );
-                }
-              },
+                      }
+                      switch (snapshot.connectionState) {
+                        case ConnectionState.waiting:
+                          return const Center(
+                            child: Text(''),
+                          );
+                        default:
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[textSection(data), likeSection(data)],
+                          );
+                      }
+                    },
+                  ),
+                  // const Divider(
+                  //   height: 2.0,
+                  //   color: Colors.black,
+                  // ),
+                  Container(
+                    padding: const EdgeInsets.only(left: 20.0, top: 10.0),
+                    child: const Text(
+                      'Comments',
+                      style: TextStyle(fontSize: 17.0),
+                    ),
+                  ),
+                  StreamBuilder<QuerySnapshot>(
+                    stream: commentsDatabase.snapshots(),
+                    builder: (BuildContext context,
+                        AsyncSnapshot<QuerySnapshot> snapshot) {
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Text('Error: ${snapshot.error}'),
+                        );
+                      }
+                      switch (snapshot.connectionState) {
+                        case ConnectionState.waiting:
+                          return const Center(
+                            child: Text(''),
+                          );
+                        default:
+                          return Column(
+                            // physics:  const ClampingScrollPhysics(),
+                            //   physics: const NeverScrollableScrollPhysics (),
+                            //   padding: const EdgeInsets.all(16.0),
+                              children: _commentsListCards(
+                                  context, snapshot) // Changed code
+                          );
+                      }
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-          Container(
-            decoration: BoxDecoration(color: Theme.of(context).cardColor),
-            child: _addComment(),
-          )
-        ],
-      ),
+            Container(
+              decoration: BoxDecoration(color: Theme.of(context).cardColor),
+              child: _addComment(),
+            )
+          ],
+        ),
+      )
     );
   }
 }

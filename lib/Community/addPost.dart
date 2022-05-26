@@ -124,6 +124,7 @@ class _AddPostState extends State<AddPost> {
             onPressed: () async {
               querySnapshot = await userDatabase.get();
               String name = '익명';
+              downloadUrl = null;
 
               if(_image != null){
                 firebaseStorageRef = firebase_storage.FirebaseStorage.instance
