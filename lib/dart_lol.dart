@@ -50,7 +50,7 @@ class League {
       sum.setTierRank(dynList['tier'], dynList['rank']);
     }
     else{
-      sum.setTierRank('unranked', 'no tier');
+      sum.setTierRank('UNRANKED', 'no tier');
     }
     return sum;
   }
