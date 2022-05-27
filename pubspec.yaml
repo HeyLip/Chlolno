@@ -68,7 +68,15 @@ flutter:
   assets:
     - assets/logo.png
     - assets/google_logo.png
-
+    - assets/tier/BRONZE.png
+    - assets/tier/CHALLENGER.png
+    - assets/tier/DIAMOND.png
+    - assets/tier/GOLD.png
+    - assets/tier/GRANDMASTER.png
+    - assets/tier/IRON.png
+    - assets/tier/MASTER.png
+    - assets/tier/PLATINUM.png
+    - assets/tier/SILVER.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

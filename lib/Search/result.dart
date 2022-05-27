@@ -5,7 +5,7 @@ import 'package:chlolno/dart_lol.dart';
 import 'package:chlolno/LeagueStuff/ingame.dart';
 import 'package:chlolno/LeagueStuff/champ.dart';
 
-const String apikey = 'RGAPI-80ed21b5-7a3e-4ccf-9786-64e751a14592';
+const String apikey = 'RGAPI-55e80a10-caac-4606-8ae8-20c7dacc8854';
 const String server = 'kr';
 int gameCount = 0;
 final league = League(apiToken: apikey, server: server);
@@ -64,7 +64,7 @@ Future<List<InGame>?> getCurrentGame(Summoner user) async{
     return userList;
   }
   else{
-  //userList.sort((a, b) => a.teamID!.compareTo(b.teamID!));
+  userList.sort((a, b) => a.teamID!.compareTo(b.teamID!));
   return userList;
   }
 }
@@ -91,7 +91,8 @@ class _ResultPageState extends State<ResultPage> {
   late Summoner? user;
   late List<Game>? games;
   List<InGame>? userList;
-  void initialize() async{
+  Future? myFuture;
+  Future initialize() async{
     user = await getSummoner(userName);
     if(user == null){
       _showDialog();
@@ -100,6 +101,7 @@ class _ResultPageState extends State<ResultPage> {
       games = await getGameHistory(user);
       setState(() {});
     }
+    return user;
   }
 
   @override
@@ -109,7 +111,7 @@ class _ResultPageState extends State<ResultPage> {
     isPicked = false;
     isMet = false;
     gameCount = 0;
-    initialize();
+    myFuture = initialize();
   }
 
   static const champions = [
@@ -365,7 +367,37 @@ class _ResultPageState extends State<ResultPage> {
             children: [
               Column(
                 children: [
-                  const Text('Champions'),
+                  FutureBuilder(
+                    future: myFuture,
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      if (snapshot.hasData == false) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            'Error: ${snapshot.error}',
+                            style: const TextStyle(fontSize: 15),
+                          ),
+                        );
+                      } else {
+                        return Card(
+                          child: ListTile(
+                            leading: Image.asset(
+                              'assets/tier/${snapshot.data.tier}.png',
+                              height: 50,
+                              width: 50,
+                              fit: BoxFit.fitWidth,
+                            ),
+                            title: Text(
+                              snapshot.data.summonerName,
+                              style: const TextStyle(fontSize: 25),
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                  ),
                   isPicked
                       ? isMet
                       ? SizedBox(
