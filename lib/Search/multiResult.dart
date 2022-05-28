@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:chlolno/dart_lol.dart';
 import 'package:chlolno/LeagueStuff/game.dart';
@@ -5,12 +7,16 @@ import 'package:chlolno/LeagueStuff/summoner.dart';
 import 'package:chlolno/LeagueStuff/ingame.dart';
 import 'package:chlolno/LeagueStuff/champ.dart';
 
-const String apikey = 'RGAPI-55e80a10-caac-4606-8ae8-20c7dacc8854';
+import 'addMemo.dart';
+
+const String apikey = 'RGAPI-6f297da5-c65b-467e-b31e-260a9c3d0801';
 const String server = 'kr';
 int gameCount = 0;
 final league = League(apiToken: apikey, server: server);
 DateTime flagTime = DateTime.now();
 bool isPicked = false, isMet = false;
+List<bool> isUMet = [];
+
 int inGamePrintCounter = 0;
 
 Future<Summoner?> getSummoner(String sumName) async {
@@ -20,6 +26,7 @@ Future<Summoner?> getSummoner(String sumName) async {
 } // summoner data 를 받아오는 부분
 
 Future<List<Game>?> getGameHistory(Summoner? user) async {
+  gameCount = 0;
   List<Game>? gameList;
   gameList = await league.getGameHistory(puuid: user!.puuid!, start: gameCount);
   gameCount = gameCount + 5;
@@ -29,10 +36,11 @@ Future<List<Game>?> getGameHistory(Summoner? user) async {
 Future<List<Game>?> updateGameHistory(dynamic games, String user) async {
   dynamic gameList;
   gameList = await league.getGameHistory(puuid: user, start: gameCount);
-  gameCount = gameCount + 5;
   for (int i = 0; i < 5; i++) {
     games!.add(gameList![i]);
   }
+  gameCount = gameCount + 5;
+
   return games;
 }
 
@@ -61,6 +69,25 @@ DateTime getLastGameTime(List<Game>? games) {
   return lastGameTime;
 }
 
+DateTime userMet(List<Game>? games, String puuid, int index) {
+  DateTime userMet = flagTime;
+  for (int i = 0; i < games!.length; i++) {
+    if (games[i].participant!.contains(puuid)) {
+      userMet = games[i].time!;
+      userMet = userMet.add(const Duration(hours: 9));
+      print(games[i].participant!);
+      break;
+    }
+  }
+  if (userMet == flagTime) {
+    isUMet[index] = false;
+    return flagTime;
+  } else {
+    isUMet[index] = true;
+    return userMet;
+  }
+}
+
 Future<List<InGame>?> getCurrentGame(Summoner user) async {
   List<InGame>? userList;
   userList = await league.getCurrentGame(
@@ -83,6 +110,7 @@ String getNameById(int champID) {
 
 class MultiResultPage extends StatefulWidget {
   final List<String> names;
+
   const MultiResultPage({Key? key, required this.names}) : super(key: key);
 
   @override
@@ -207,6 +235,7 @@ class _MultiResultPageState extends State<MultiResultPage> {
 class MResultPage extends StatefulWidget {
   final String name;
   final List<String> names;
+
   const MResultPage({Key? key, required this.name, required this.names})
       : super(key: key);
 
@@ -217,15 +246,21 @@ class MResultPage extends StatefulWidget {
 class _MResultPageState extends State<MResultPage> {
   String championName = '';
   DateTime metTime = DateTime.now();
+  List<DateTime> userMetTime = [];
   late String userName = '';
+  late List<String> userNames;
   late Summoner? user;
   late List<Game>? games;
   List<InGame>? userList;
   Future? myFuture;
+  Future? multiFuture;
+  FirebaseAuth auth = FirebaseAuth.instance;
+  List<Summoner?> users = [];
+
   Future initialize() async {
     user = await getSummoner(userName);
     if (user == null) {
-      _showDialog();
+      _showDialog(userName);
     } else {
       games = await getGameHistory(user);
       setState(() {});
@@ -233,14 +268,31 @@ class _MResultPageState extends State<MResultPage> {
     return user;
   }
 
+  Future getSummonerList() async {
+    Summoner? add;
+    for (int i = 0; i < userNames.length; i++) {
+      add = await getSummoner(userNames[i]);
+      users.add(add);
+    }
+    print('this is summoner list');
+    setState(() {});
+    return users;
+  }
+
   @override
   void initState() {
     super.initState();
     userName = widget.name;
+    userNames = widget.names;
     isPicked = false;
     isMet = false;
     gameCount = 0;
     myFuture = initialize();
+    multiFuture = getSummonerList();
+    for (int i = 0; i < userNames.length; i++) {
+      userMetTime.add(DateTime.now());
+      isUMet.add(false);
+    }
   }
 
   static const champions = [
@@ -405,60 +457,138 @@ class _MResultPageState extends State<MResultPage> {
     'Zyra'
   ];
 
+  Future<bool> checkAnonymous() async{
+    DocumentSnapshot documentSnapshot = await FirebaseFirestore.instance.collection('user').doc(auth.currentUser?.uid).get();
+
+    if(documentSnapshot['anonymous']){
+      return true;
+    }
+    return false;
+  }
+
+  List<Widget> _buildCardListContext(users) {
+    users.remove(user);
+    List<Widget> rowList = [];
+    for (int i = 0; i < users.length; i++) {
+      String tier = users[i].tier;
+      rowList.add(Card(
+        child: ListTile(
+          leading: Image.asset(
+            'assets/tier/$tier.png',
+            height: 50,
+            width: 50,
+            fit: BoxFit.fitWidth,
+          ),
+          title: Text(
+            users[i].summonerName,
+            style: const TextStyle(fontSize: 25),
+          ),
+          trailing: users[i].summonerName != userName
+              ? isUMet[i]
+                  ? Text(
+                      '${flagTime.difference(userMetTime[i]).inHours}시간 전에 만남.')
+                  : Text(
+                      '${flagTime.difference(userMetTime[i]).inHours}시간 동안 만나지 못함.')
+              : const Text('Me'),
+        ),
+      ));
+    }
+    return rowList;
+  }
+
   Widget _buildRowContext(userList) {
     String champName = getNameById(userList.championID);
     inGamePrintCounter++;
     if (inGamePrintCounter == 6) {
       return Column(
         children: [
-          const Divider(
-            indent: 15,
-            endIndent: 15,
-            thickness: 2,
-            color: Colors.black,
+          const SizedBox(
+            height: 20,
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              const SizedBox(
-                width: 50,
-              ),
-              Image.network(
+          Card(
+            child: ListTile(
+              visualDensity: const VisualDensity(vertical: -3),
+              leading: Image.network(
                 'https://ddragon.leagueoflegends.com/cdn/12.9.1/img/champion/$champName.png',
                 height: 30,
                 width: 30,
               ),
-              Text(userList.summonerName),
-            ],
+              trailing:
+              FutureBuilder<bool> (
+                future: checkAnonymous(),
+                builder: (BuildContext context, AsyncSnapshot<bool> snapshot){
+                  if(snapshot.hasData){
+                    if(snapshot.data == false){
+                      return IconButton(
+                        onPressed: (){
+                          Navigator.push(context,
+                              MaterialPageRoute<void>(builder: (BuildContext context) {
+                                return AddMemo(
+                                  summonerName: userList.summonerName,
+                                  champName: champName,
+                                  puuId: user!.puuid!,
+                                );
+                              }));
+                        },
+                        icon: const Icon(Icons.notes),
+                      );
+                    }
+                  }
+                  return const Text('');
+                },
+              ),
+              title: Text(userList.summonerName),
+            ),
           ),
         ],
       );
     } else {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          const SizedBox(
-            width: 50,
-          ),
-          Image.network(
+      return Card(
+        child: ListTile(
+          visualDensity: const VisualDensity(vertical: -3),
+          leading: Image.network(
             'https://ddragon.leagueoflegends.com/cdn/12.9.1/img/champion/$champName.png',
             height: 30,
             width: 30,
           ),
-          Text(userList.summonerName),
-        ],
+          trailing:
+          FutureBuilder<bool> (
+            future: checkAnonymous(),
+            builder: (BuildContext context, AsyncSnapshot<bool> snapshot){
+              if(snapshot.hasData){
+                if(snapshot.data == false){
+                  return IconButton(
+                    onPressed: (){
+                      Navigator.push(context,
+                          MaterialPageRoute<void>(builder: (BuildContext context) {
+                            return AddMemo(
+                              summonerName: userList.summonerName,
+                              champName: champName,
+                              puuId: user!.puuid!,
+                            );
+                          }));
+                    },
+                    icon: const Icon(Icons.notes),
+                  );
+                }
+              }
+              return const Text('');
+            },
+          ),
+          title: Text(userList.summonerName),
+        ),
       );
     }
   }
 
-  void _showDialog() {
+  void _showDialog(String userName) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         // return object of type Dialog
         return AlertDialog(
           title: const Text("주 의"),
-          content: const Text("유저를 찾을 수 없습니다."),
+          content: Text("$userName 해당 유저를 찾을 수 없습니다."),
           actions: <Widget>[
             TextButton(
               child: const Text("돌아가기"),
@@ -478,7 +608,7 @@ class _MResultPageState extends State<MResultPage> {
     return MaterialApp(
       home: DefaultTabController(
         // 탭의 수 설정
-        length: 2,
+        length: 3,
         child: Scaffold(
           appBar: AppBar(
             title: const Text('Search Result'),
@@ -493,6 +623,9 @@ class _MResultPageState extends State<MResultPage> {
               tabs: [
                 Tab(child: Text('Champion')),
                 Tab(child: Text('InGame')),
+                Tab(
+                  child: Text('User Met'),
+                )
               ],
             ),
           ),
@@ -526,6 +659,30 @@ class _MResultPageState extends State<MResultPage> {
                               snapshot.data.summonerName,
                               style: const TextStyle(fontSize: 25),
                             ),
+                            trailing:
+                            FutureBuilder<bool> (
+                              future: checkAnonymous(),
+                              builder: (BuildContext context, AsyncSnapshot<bool> snapshot){
+                                if(snapshot.hasData){
+                                  if(snapshot.data == false){
+                                    return IconButton(
+                                      onPressed: (){
+                                        Navigator.push(context,
+                                            MaterialPageRoute<void>(builder: (BuildContext context) {
+                                              return AddMemo(
+                                                summonerName: user!.summonerName!,
+                                                champName: 'null',
+                                                puuId: user!.puuid!,
+                                              );
+                                            }));
+                                      },
+                                      icon: const Icon(Icons.notes),
+                                    );
+                                  }
+                                }
+                                return const Text('');
+                              },
+                            )
                           ),
                         );
                       }
@@ -537,12 +694,12 @@ class _MResultPageState extends State<MResultPage> {
                               width: 250,
                               height: 70,
                               child: Text(
-                                  '$userName님은 $championName챔피언을 \n$metTime에\n 마지막으로 만나셨습니다.'))
+                                  '$userName님은 $championName챔피언을 \n${flagTime.difference(metTime).inHours}일 전에 마지막으로 만났습니다.'))
                           : SizedBox(
                               width: 250,
                               height: 70,
                               child: Text(
-                                  '$userName님은 $championName챔피언을 \n$metTime이후에\n 만난 적이 없습니다.'))
+                                  '$userName님은 $championName챔피언을 \n${flagTime.difference(metTime).inHours}일 동안 만난 적이 없습니다.'))
                       : const Text('챔피언을 골라주세요.'),
                   ElevatedButton(
                     onPressed: () async {
@@ -597,14 +754,16 @@ class _MResultPageState extends State<MResultPage> {
               Column(
                 children: [
                   const SizedBox(
-                    height: 50,
+                    height: 20,
                   ),
                   userList == null
                       ? const Text('게임 중이 아닙니다.')
-                      : Column(
-                          children: userList!
-                              .map((userList) => _buildRowContext(userList))
-                              .toList(),
+                      : Expanded(
+                          child: ListView(
+                            children: userList!
+                                .map((userList) => _buildRowContext(userList))
+                                .toList(),
+                          ),
                         ),
                   ElevatedButton(
                     onPressed: () async {
@@ -617,7 +776,51 @@ class _MResultPageState extends State<MResultPage> {
                     child: const Text('불러오기'),
                   ),
                 ],
-              )
+              ),
+              Center(
+                child: Column(
+                  children: [
+                    FutureBuilder(
+                        future: multiFuture,
+                        builder:
+                            (BuildContext context, AsyncSnapshot snapshot) {
+                          if (snapshot.hasData == false) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          } else if (snapshot.hasError) {
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                'Error: ${snapshot.error}',
+                                style: const TextStyle(fontSize: 15),
+                              ),
+                            );
+                          } else {
+                            return Column(
+                              children: _buildCardListContext(snapshot.data),
+                            );
+                          }
+                        }),
+                    ElevatedButton(
+                      onPressed: () async {
+                        for (int i = 0; i < userNames.length; i++) {
+                          isUMet[i] = false;
+                          userMetTime[i] = userMet(games, users[i]!.puuid!, i);
+                          print(users[i]!.puuid!);
+                          if (isUMet[i] != true) {
+                            userMetTime[i] = getLastGameTime(games);
+                          }
+                        }
+                        games = await updateGameHistory(
+                            games, user!.puuid!); // 5게임 더
+                        setState(() {}); // 화면다시그리기
+                      },
+                      child:
+                          Text('Update 5 games / Total Elements: $gameCount'),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

@@ -1,11 +1,15 @@
 import 'package:chlolno/LeagueStuff/game.dart';
 import 'package:chlolno/LeagueStuff/summoner.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:chlolno/dart_lol.dart';
 import 'package:chlolno/LeagueStuff/ingame.dart';
 import 'package:chlolno/LeagueStuff/champ.dart';
 
-const String apikey = 'RGAPI-55e80a10-caac-4606-8ae8-20c7dacc8854';
+import 'addMemo.dart';
+
+const String apikey = 'RGAPI-6f297da5-c65b-467e-b31e-260a9c3d0801';
 const String server = 'kr';
 int gameCount = 0;
 final league = League(apiToken: apikey, server: server);
@@ -17,13 +21,15 @@ Future<Summoner?> getSummoner(String sumName) async {
   Summoner? user;
   user = await league.getSummonerInfo(summonerName: sumName);
   return user;
-}  // summoner data 를 받아오는 부분
+} // summoner data 를 받아오는 부분
+
 Future<List<Game>?> getGameHistory(Summoner? user) async {
   List<Game>? gameList;
   gameList = await league.getGameHistory(puuid: user!.puuid!, start: gameCount);
   gameCount = gameCount + 5;
   return gameList;
 } // game history 를 받아오는 부분
+
 Future<List<Game>?> updateGameHistory(dynamic games, String user) async {
   dynamic gameList;
   gameList = await league.getGameHistory(puuid: user, start: gameCount);
@@ -33,6 +39,7 @@ Future<List<Game>?> updateGameHistory(dynamic games, String user) async {
   }
   return games;
 }
+
 DateTime championMet(List<Game>? games, String champName) {
   DateTime championMet = flagTime;
   for (int i = 0; i < games!.length; i++) {
@@ -50,24 +57,27 @@ DateTime championMet(List<Game>? games, String champName) {
     return championMet;
   }
 }
+
 DateTime getLastGameTime(List<Game>? games) {
   DateTime lastGameTime;
   lastGameTime = games![games.length - 1].time!;
   lastGameTime = lastGameTime.add(const Duration(hours: 9));
   return lastGameTime;
 }
-Future<List<InGame>?> getCurrentGame(Summoner user) async{
+
+Future<List<InGame>?> getCurrentGame(Summoner user) async {
   List<InGame>? userList;
-  userList = await league.getCurrentGame(userName: user.summonerName!, userId: user.summonerID!);
-  if(userList == null){
+  userList = await league.getCurrentGame(
+      userName: user.summonerName!, userId: user.summonerID!);
+  if (userList == null) {
     userList!.clear();
     return userList;
-  }
-  else{
-  userList.sort((a, b) => a.teamID!.compareTo(b.teamID!));
-  return userList;
+  } else {
+    userList.sort((a, b) => a.teamID!.compareTo(b.teamID!));
+    return userList;
   }
 }
+
 String getNameById(int champID) {
   var champIDs = getChampIDs();
   var idx = champIDs.indexOf(champID);
@@ -92,12 +102,13 @@ class _ResultPageState extends State<ResultPage> {
   late List<Game>? games;
   List<InGame>? userList;
   Future? myFuture;
-  Future initialize() async{
+  FirebaseAuth auth = FirebaseAuth.instance;
+
+  Future initialize() async {
     user = await getSummoner(userName);
-    if(user == null){
-      _showDialog();
-    }
-    else {
+    if (user == null) {
+      _showDialog(userName);
+    } else {
       games = await getGameHistory(user);
       setState(() {});
     }
@@ -276,54 +287,107 @@ class _ResultPageState extends State<ResultPage> {
     'Zyra'
   ];
 
-  Widget _buildRowContext(userList){
+  Future<bool> checkAnonymous() async{
+    DocumentSnapshot documentSnapshot = await FirebaseFirestore.instance.collection('user').doc(auth.currentUser?.uid).get();
+
+    if(documentSnapshot['anonymous']){
+      return true;
+    }
+    return false;
+  }
+
+  Widget _buildRowContext(userList) {
     String champName = getNameById(userList.championID);
     inGamePrintCounter++;
-    if(inGamePrintCounter==6){
+    if (inGamePrintCounter == 6) {
       return Column(
         children: [
-          const Divider(indent: 15, endIndent: 15, thickness: 2, color: Colors.black,),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              const SizedBox(width: 50,),
-              Image.network(
+          const SizedBox(height: 20,),
+          Card(
+            child: ListTile(
+              visualDensity: const VisualDensity(vertical: -3),
+              leading: Image.network(
                 'https://ddragon.leagueoflegends.com/cdn/12.9.1/img/champion/$champName.png',
                 height: 30,
                 width: 30,
               ),
-              Text(userList.summonerName),
-            ],
+              trailing:
+              FutureBuilder<bool> (
+                future: checkAnonymous(),
+                builder: (BuildContext context, AsyncSnapshot<bool> snapshot){
+                  if(snapshot.hasData){
+                    if(snapshot.data == false){
+                      return IconButton(
+                        onPressed: (){
+                          Navigator.push(context,
+                              MaterialPageRoute<void>(builder: (BuildContext context) {
+                                return AddMemo(
+                                  summonerName: userList.summonerName,
+                                  champName: champName,
+                                  puuId: user!.puuid!,
+                                );
+                              }));
+                        },
+                        icon: const Icon(Icons.notes),
+                      );
+                    }
+                  }
+                  return const Text('');
+                },
+              ),
+              title: Text(userList.summonerName),
+            ),
           ),
         ],
       );
-    }
-    else{
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          const SizedBox(width: 50,),
-          Image.network(
+    } else {
+      return Card(
+        child: ListTile(
+          visualDensity: const VisualDensity(vertical: -3),
+          leading: Image.network(
             'https://ddragon.leagueoflegends.com/cdn/12.9.1/img/champion/$champName.png',
             height: 30,
             width: 30,
           ),
-          Text(userList.summonerName),
-        ],
+          trailing: FutureBuilder<bool> (
+            future: checkAnonymous(),
+            builder: (BuildContext context, AsyncSnapshot<bool> snapshot){
+              if(snapshot.hasData){
+                if(snapshot.data == false){
+                  return IconButton(
+                    onPressed: (){
+                      Navigator.push(context,
+                          MaterialPageRoute<void>(builder: (BuildContext context) {
+                            return AddMemo(
+                              summonerName: userList.summonerName,
+                              champName: champName,
+                              puuId: user!.puuid!,
+                            );
+                          }));
+                    },
+                    icon: const Icon(Icons.notes),
+                  );
+                }
+              }
+              return const Text('');
+            },
+          ),
+          title: Text(userList.summonerName),
+        ),
       );
     }
   }
 
-  void _showDialog() {
+  void _showDialog(String userName) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         // return object of type Dialog
         return AlertDialog(
           title: const Text("주 의"),
-          content: const Text("유저를 찾을 수 없습니다."),
+          content: Text("$userName 해당 유저를 찾을 수 없습니다."),
           actions: <Widget>[
-             TextButton(
+            TextButton(
               child: const Text("돌아가기"),
               onPressed: () {
                 Navigator.pop(context);
@@ -347,19 +411,15 @@ class _ResultPageState extends State<ResultPage> {
             title: const Text('Search Result'),
             centerTitle: true,
             leading: IconButton(
-              onPressed: (){
+              onPressed: () {
                 Navigator.pop(context);
               },
               icon: const Icon(Icons.arrow_back),
             ),
             bottom: const TabBar(
               tabs: [
-                Tab(
-                    child:  Text('Champion')
-                ),
-                Tab(
-                    child:  Text('InGame')
-                ),
+                Tab(child: Text('Champion')),
+                Tab(child: Text('InGame')),
               ],
             ),
           ),
@@ -393,6 +453,30 @@ class _ResultPageState extends State<ResultPage> {
                               snapshot.data.summonerName,
                               style: const TextStyle(fontSize: 25),
                             ),
+                            trailing:
+                            FutureBuilder<bool> (
+                              future: checkAnonymous(),
+                              builder: (BuildContext context, AsyncSnapshot<bool> snapshot){
+                                if(snapshot.hasData){
+                                  if(snapshot.data == false){
+                                    return IconButton(
+                                      onPressed: (){
+                                        Navigator.push(context,
+                                            MaterialPageRoute<void>(builder: (BuildContext context) {
+                                              return AddMemo(
+                                                summonerName: user!.summonerName!,
+                                                champName: 'null',
+                                                puuId: user!.puuid!,
+                                              );
+                                            }));
+                                      },
+                                      icon: const Icon(Icons.notes),
+                                    );
+                                  }
+                                }
+                                return const Text('');
+                              },
+                            ),
                           ),
                         );
                       }
@@ -400,20 +484,21 @@ class _ResultPageState extends State<ResultPage> {
                   ),
                   isPicked
                       ? isMet
-                      ? SizedBox(
-                      width: 250,
-                      height: 70,
-                      child: Text(
-                          '$userName님은 $championName챔피언을 \n$metTime에\n 마지막으로 만나셨습니다.'))
-                      : SizedBox(
-                      width: 250,
-                      height: 70,
-                      child: Text(
-                          '$userName님은 $championName챔피언을 \n$metTime이후에\n 만난 적이 없습니다.'))
+                          ? SizedBox(
+                              width: 250,
+                              height: 70,
+                              child: Text(
+                                  '$userName님은 $championName챔피언을 \n${flagTime.difference(metTime).inHours}시간 전에 마지막으로 만났습니다.'))
+                          : SizedBox(
+                              width: 250,
+                              height: 70,
+                              child: Text(
+                                  '$userName님은 $championName챔피언을 \n${flagTime.difference(metTime).inHours}시간 동안 만난 적이 없습니다.'))
                       : const Text('챔피언을 골라주세요.'),
                   ElevatedButton(
                     onPressed: () async {
-                      games = await updateGameHistory(games, user!.puuid!); // 5게임 더
+                      games =
+                          await updateGameHistory(games, user!.puuid!); // 5게임 더
                       setState(() {}); // 화면다시그리기
                     },
                     child: Text('Update 5 games / Total Elements: $gameCount'),
@@ -425,7 +510,7 @@ class _ResultPageState extends State<ResultPage> {
                     child: GridView.builder(
                       itemCount: champions.length, //item 개수
                       gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 6, //1 개의 행에 보여줄 item 개수
                         childAspectRatio: 1 / 1, //item 의 가로 1, 세로 2 의 비율
                         mainAxisSpacing: 5, //수평 Padding
@@ -462,19 +547,27 @@ class _ResultPageState extends State<ResultPage> {
               ),
               Column(
                 children: [
-                  const SizedBox(height: 50,),
-                  userList == null ? const Text('게임 중이 아닙니다.')
-                  :
-                  Column(
-                    children: userList!.map((userList) => _buildRowContext(userList)).toList(),
+                  const SizedBox(
+                    height: 20,
                   ),
+                  userList == null
+                      ? const Text('게임 중이 아닙니다.')
+                      : Expanded(
+                        child: ListView(
+                            children: userList!
+                                .map((userList) => _buildRowContext(userList))
+                                .toList(),
+                          ),
+                      ),
                   ElevatedButton(
-                      onPressed: () async{
-                        userList = await league.getCurrentGame(userName: user!.summonerName!, userId: user!.summonerID!);
-                        inGamePrintCounter = 0;
-                        setState((){});
-                      },
-                      child: const Text('불러오기'),
+                    onPressed: () async {
+                      userList = await league.getCurrentGame(
+                          userName: user!.summonerName!,
+                          userId: user!.summonerID!);
+                      inGamePrintCounter = 0;
+                      setState(() {});
+                    },
+                    child: const Text('불러오기'),
                   ),
                 ],
               )

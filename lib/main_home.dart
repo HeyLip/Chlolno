@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'Community/community_home.dart';
@@ -13,6 +15,11 @@ class MainHomePage extends StatefulWidget {
 
 class _MainHomePageState extends State<MainHomePage> {
   int _currentIndex = 0;
+  FirebaseAuth auth = FirebaseAuth.instance;
+  CollectionReference database = FirebaseFirestore.instance.collection('user');
+  late QuerySnapshot querySnapshot; // 기존에 로그인한 것인지 아닌지를 확인하기위해 선언한 변수
+  late bool anonymous;
+
   final List<Widget> _children = [const SearchHomePage(), const CommunityHomePage(), const UserHomePage()];
   void _onTap(int index) {
     setState(() {

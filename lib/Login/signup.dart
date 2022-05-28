@@ -157,6 +157,7 @@ class _SignPageState extends State<SignPage> {
                                 'email': user.email.toString(),
                                 'name': _usernameController.text,
                                 'uid': user.uid,
+                                'anonymous': false,
                               });
                             }
                           }

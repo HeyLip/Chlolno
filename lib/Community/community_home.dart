@@ -1,5 +1,6 @@
 import 'package:chlolno/Community/post_Detail.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 // import 'package:firebase_auth/firebase_auth.dart';
 // import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +17,7 @@ class CommunityHomePage extends StatefulWidget {
 
 class _CommunityHomePageState extends State<CommunityHomePage> {
   late CollectionReference database;
+  FirebaseAuth auth = FirebaseAuth.instance;
 
   @override
   void initState() {
@@ -46,7 +48,7 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(15.0),
             decoration: const BoxDecoration(
-              color: Color(0xFFB2DEB8),
+              color: Color(0xFFDCE4ED),
               borderRadius: BorderRadius.all(Radius.circular(15)),
             ),
             child: Row(
@@ -93,18 +95,38 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
 
   @override
   Widget build(BuildContext context) {
+
+    Future<bool> checkAnonymous() async{
+      DocumentSnapshot documentSnapshot = await FirebaseFirestore.instance.collection('user').doc(auth.currentUser?.uid).get();
+
+      if(documentSnapshot['anonymous']){
+        return true;
+      }
+      return false;
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Community'),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.post_add),
-            onPressed: () {
-              Navigator.push(context,
-                  MaterialPageRoute<void>(builder: (BuildContext context) {
-                return const AddPost();
-              }));
+        actions: <Widget> [
+          FutureBuilder<bool> (
+            future: checkAnonymous(),
+            builder: (BuildContext context, AsyncSnapshot<bool> snapshot){
+              if(snapshot.hasData){
+                if(snapshot.data == false){
+                  return IconButton(
+                    icon: const Icon(Icons.post_add),
+                    onPressed: () {
+                      Navigator.push(context,
+                          MaterialPageRoute<void>(builder: (BuildContext context) {
+                            return const AddPost();
+                          }));
+                    },
+                  );
+                }
+              }
+              return const Text('');
             },
           ),
         ],

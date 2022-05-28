@@ -3,7 +3,6 @@ import 'multiResult.dart';
 import 'result.dart';
 
 class SearchHomePage extends StatefulWidget {
-
   const SearchHomePage({Key? key}) : super(key: key);
 
   @override

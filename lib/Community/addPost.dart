@@ -39,7 +39,7 @@ class _AddPostState extends State<AddPost> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add'),
+        title: const Text('Add Post'),
         centerTitle: true,
         automaticallyImplyLeading: false,
       ),

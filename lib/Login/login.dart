@@ -135,9 +135,52 @@ class _LoginPageState extends State {
                     'email': user.email.toString(),
                     'name': user.displayName.toString(),
                     'uid': user.uid,
+                    'anonymous': false,
                   });
                 }
                 //--------------------------------------------------------------------------
+
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => const MainHomePage(),
+                  ),
+                );
+              }
+            },
+          ),
+
+          //------------------------------ Anonymous login button ---------------------------------------------
+
+          ElevatedButton(
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.all(const Color(0xffC4C4C4)),
+              foregroundColor: MaterialStateProperty.all(Colors.white),
+            ),
+            child: const Text('Guest'),
+            onPressed: () async {
+              UserCredential userCredential = await FirebaseAuth.instance.signInAnonymously();
+              User? user = userCredential.user;
+
+              if (user != null) {
+                int i;
+                querySnapshot = await database.get();
+
+                for(i = 0; i < querySnapshot.docs.length; i++){
+                  var a = querySnapshot.docs[i];
+
+                  if(a.get('uid') == user.uid){
+                    break;
+                  }
+                }
+
+                if(i == (querySnapshot.docs.length)){
+                  database.doc(user.uid).set({
+                    'email': "None Email",
+                    'name': "익명",
+                    'uid': user.uid,
+                    'anonymous': true,
+                  });
+                }
 
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
