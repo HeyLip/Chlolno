@@ -45,7 +45,7 @@ class _MyPostState extends State<MyPost> {
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(15.0),
             decoration: const BoxDecoration(
-              color: Color(0xFFB2DEB8),
+              color:Color(0xFFDCE4ED),
               borderRadius: BorderRadius.all(Radius.circular(15)),
             ),
             child: Row(
